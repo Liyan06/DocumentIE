@@ -55,13 +55,13 @@ def evaluate(args, model, val_loader):
     acc = sum(np.array(truth) == np.array(predictions)) / len(truth)
 
     print(f"Eval Accuracy: {100*acc:.2f}%")
-    print(f"Eval macro-F1: {100*f1_score(truth, predictions, average='macro'):.1f}%")
-    print(f"Eval micro-F1: {100*f1_score(truth, predictions, average='micro'):.1f}%")
+    print(f"Eval macro-F1: {100*f1_score(truth, predictions, average='macro'):.2f}%")
+    print(f"Eval micro-F1: {100*f1_score(truth, predictions, average='micro'):.2f}%")
 
     if args.do_eval:
-        with open(os.path.join(args.eval_output_dir, args.eval_output_name), 'w') as f:
-            json.dump(predictions, f)
-
+        if args.eval_output_name:
+            with open(os.path.join(args.eval_output_dir, args.eval_output_name), 'w') as f:
+                json.dump(predictions, f)
     return acc
 
 

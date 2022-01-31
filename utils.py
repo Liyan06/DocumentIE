@@ -197,7 +197,7 @@ def common_args():
         type=str,
         help="The output directory where the model predictions and checkpoints will be written.",
     )
-    parser.add_argument("--eval_output_name", default='./predictions/relation_pred/', type=str, help="The output name.")
+    parser.add_argument("--eval_output_name", default=None, type=str, help="The output name.")
 
     parser.add_argument("--do_train", action="store_true", help="Whether to run training.")
     parser.add_argument("--do_eval", action="store_true", help="Whether to run eval on the dev set.")
@@ -229,5 +229,10 @@ def common_args():
     parser.add_argument("--seed", type=int, default=42, help="random seed for initialization")
     parser.add_argument("--patience", type=int, default=42, help="set patience")
     parser.add_argument("--log_path", type=str, help="set up log path to save training stats.")
+
+    parser.add_argument(
+        "--interpret_tool", type=str, 
+        help="Interpretation tool selected in the list: ['IG', 'DL', 'IXG', 'LIME']",
+    )
    
     return parser
