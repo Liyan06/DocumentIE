@@ -1,9 +1,9 @@
 import numpy as np
 import torch
-from loadData import load_data
+from load_data import load_data
 from models import get_val_loader, RERoberta
 
-from loadData import load_df, load_relation, MOST_COMMON_R
+from load_data import load_df, load_relation, MOST_COMMON_R
 import json
 from evidence_ranking import find_start_end_idx, get_token_offset, get_sents_offsets, locate_token_to_sent
 from tqdm import tqdm
@@ -32,7 +32,7 @@ def extract_enough_sentence_org(args, val_idx, input_ids, k, evidence, text):
         new_input_ids += [1] * pad_len
         
     new_input_ids = torch.tensor(new_input_ids).unsqueeze(0)
-    new_attention_mask = torch.where(new_input_ids.clone().detach()  != 1, torch.tensor(1), torch.tensor(0)).unsqueeze(0)
+    new_attention_mask = torch.where(new_input_ids.clone().detach() != 1, torch.tensor(1), torch.tensor(0)).unsqueeze(0)
         
     return new_input_ids.to(args.device), new_attention_mask.to(args.device)
 

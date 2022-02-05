@@ -1,5 +1,5 @@
 from utils import common_args
-from loadData import load_df
+from load_data import load_df
 import json
 
 
@@ -49,7 +49,7 @@ def f1_eval(args, all_evi=True):
 
     evi_truth_dict = dict(enumerate(load_df(args.val_dir).evidence.values.tolist()))
     with open(args.sufficient_sent_path, "r") as f:
-        evi_pred = json.load(f)
+        evi_pred = json.load(f)[0]
     
     evi_pred_dict = {}
 

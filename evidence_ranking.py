@@ -129,10 +129,24 @@ def get_all_ranks(args, val_df, val_data, tool, mask=False):
                 inputs=tool.model.model.roberta.embeddings(input_ids),
                 target=pred_idx, 
             )
+        elif args.interpret_tool == 'LIME':
+            prefix_end, postfix_idx = get_prefix_postfix_idx(input_ids)
+            attributions = tool.attribute(
+                inputs=input_ids,
+                target=pred_idx,
+                additional_forward_args=(attention_mask,),
+                n_samples=100,
+                show_progress=False,
+                device=args.gpu_device,
+                prefix_end=prefix_end,
+                postfix_idx=postfix_idx,
+                classifer=tool.model
+            )
             
         attributions_sum = summarize_attributions(attributions)
         sent_rank = get_ranked_sentence(text[0], input_ids[0], attributions_sum)
         rank_list.append(sent_rank)
+
 
     return rank_list
 
@@ -150,6 +164,7 @@ if __name__ == "__main__":
     val_data = load_data(args.val_dir)
     val_df = load_df(args.val_dir)
 
+    torch.cuda.empty_cache()
     model = RERoberta(args, n_class=len(MOST_COMMON_R), regularization=False)
     model.to(args.device)
     model.load_state_dict(torch.load(args.trained_model_name_or_path))

@@ -5,7 +5,7 @@ from utils import seed_everything, common_args, EarlyStopping
 from tqdm import tqdm
 
 from models import *
-from loadData import load_df, load_df_with_na
+from load_data import load_df, load_df_with_na
 
 import pandas as pd
 import warnings

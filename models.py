@@ -8,7 +8,7 @@ from nltk.tokenize import sent_tokenize
 from utils import get_att_regu_mask
 import numpy as np
 
-from loadData import load_data, load_document, load_relation, sort_relations, MOST_COMMON_R
+from load_data import load_data, load_document, load_relation, sort_relations, MOST_COMMON_R
 from transformers import get_linear_schedule_with_warmup, AdamW, RobertaModel, RobertaConfig, RobertaTokenizer
 
 
@@ -473,7 +473,6 @@ def load_entro_data(data, device):
     input_ids = data['input_ids'].to(device)
     attention_mask = data['attention_mask'].to(device)   
     relation = data['relation'].to(device)
-
 
     reduced_input_ids = data['reduced_input_ids'].to(device)
     reduced_attention_mask = data['reduced_attention_mask'].to(device)
