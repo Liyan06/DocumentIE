@@ -15,9 +15,7 @@ tqdm==4.62.3 \
 nltk==3.6.7 \
 captum==0.4.1 
 
-DocRED dataset (Yao et al., 2019) can be downloaded from [thunlp/DocRED](https://github.com/thunlp/DocRED).
-
-We will provide our model checkpoint after the anonymous period.
+DocRED dataset (Yao et al., 2019) can be downloaded from [thunlp/DocRED](https://github.com/thunlp/DocRED). The adapted DocRED we use in the paper is processed in `load_data.py`, and can be directly loaded for training and evaluation. Details can be found in `train.py`. We will provide our model checkpoint after the anonymous period for future fair comparisons.
 
 ## Training and Evaluation
 
@@ -49,7 +47,7 @@ python train.py \
 
 Evidence extraction consists of two steps. (1) We first use any attribution method to obtain a ranking of sentences through `evidence_ranking.py` for all inputs; (2) then select evidence sentences with our SUFFICIENT method via `sufficient_sent_selection.py`.
 
-### Sentennce Ranking
+### Sentence Ranking
 ```
 python evidence_ranking.py \
     --trained_model_name_or_path PATH_TO_SAVED_MODEL_PARAMS \
@@ -58,7 +56,7 @@ python evidence_ranking.py \
     --per_gpu_eval_batch_size 1 \
 ```
 
-`--interpret_tool` can be any of the interpretation methods `IG, DL, IXG, LIME` mentioned in the paper. `LIME` runs much slower compared to other interpretation methods.
+`--interpret_tool` can be any of the interpretation methods `IG, DL, IXG, LIME` mentioned in the paper. `LIME` and `IG` runs slower compared to the rest of interpretation methods.
 
 ### Evidence Selection
 ```
@@ -69,7 +67,7 @@ python sufficient_sent_selection.py \
     --per_gpu_eval_batch_size 1 \
 ```
 
-`--per_gpu_eval_batch_size` is set to `1` for easier computations. 
+`--per_gpu_eval_batch_size` is set to 1 for easier computations. 
 
 ### Evidence Evaluation
 Once evidence sentences are collected by our SUFFICIENT method, use the following command to evaluate.

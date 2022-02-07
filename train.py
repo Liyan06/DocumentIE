@@ -196,7 +196,6 @@ if __name__ == '__main__':
     regularization = True if train_type in ('regu', 'regu_entro') else False
     model = RERoberta(args, n_class=len(MOST_COMMON_R), regularization=regularization)
     model.to(args.device)
-
     
     val_data = load_data(args.val_dir)
     val_df = load_df_with_na(args.val_dir, cat='val', loader_size=len(load_df(args.val_dir)), proportion=0)
