@@ -1,8 +1,7 @@
 python train.py \
     --do_eval \
     --val_dir data/DocRed/dev.json \
-    --train_type std \
-    --trained_model_name_or_path params/roberta_97_NA_40000.pth \
+    --trained_model_name_or_path params/docred/roberta_97_NA_40000.pth \
     --max_input_len 296 \
     --dataset_name RERobertaDataset \
     --per_gpu_train_batch_size 8 \

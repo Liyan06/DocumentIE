@@ -3,7 +3,7 @@ from load_data import load_df
 import json
 
 
-def get_macro_f1_R_P_score(truth_dict, pred_dict):
+def get_macro_f1_R_P_score(truth_dict, pred_dict, verbose=True):
     recall = []
     precision = []
     f1 = []
@@ -24,9 +24,12 @@ def get_macro_f1_R_P_score(truth_dict, pred_dict):
     macro_pre = round(sum(precision) / len(precision) * 100, 1)
     macro_recall = round(sum(recall) / len(recall)* 100, 1)
     
-    print(f"Macro:   F1: {macro_f1}, Precision: {macro_pre}, Recall: {macro_recall}")
+    if verbose:
+        print(f"Macro:   F1: {macro_f1}, Precision: {macro_pre}, Recall: {macro_recall}")
+    return macro_f1, macro_pre, macro_recall
 
-def get_micro_f1_R_P_score(truth_dict, pred_dict):
+
+def get_micro_f1_R_P_score(truth_dict, pred_dict, verbose=True):
     
     num_correct_preds = 0
     num_truth = 0
@@ -42,7 +45,9 @@ def get_micro_f1_R_P_score(truth_dict, pred_dict):
     precision = round(num_correct_preds / num_pred * 100, 1)
     f1 = round(2 * recall * precision / (recall + precision), 1)
     
-    print(f"Micro:   F1: {f1}, Precision: {precision}, Recall: {recall}")
+    if verbose:
+        print(f"Micro:   F1: {f1}, Precision: {precision}, Recall: {recall}")
+    return f1, precision, recall
 
 
 def f1_eval(args, all_evi=True):

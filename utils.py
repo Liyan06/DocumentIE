@@ -149,6 +149,7 @@ def common_args():
 
     parser.add_argument(
         "--train_type",
+        default='std',
         type=str,
         help="Train type selected in the list: ['std', 'regu', 'entro', 'regu_entro']",
     )
@@ -201,33 +202,28 @@ def common_args():
 
     parser.add_argument("--do_train", action="store_true", help="Whether to run training.")
     parser.add_argument("--do_eval", action="store_true", help="Whether to run eval on the dev set.")
-    parser.add_argument("--do_test", action="store_true", help="Whether to run eval on the test set.")
+    # parser.add_argument("--do_test", action="store_true", help="Whether to run eval on the test set.")
 
     parser.add_argument("--n_gpu", default=1, type=int, help="Number of Gpu to use.", )
     parser.add_argument("--per_gpu_train_batch_size", default=8, type=int, help="Batch size training.", )
     parser.add_argument("--per_gpu_eval_batch_size", default=8, type=int, help="Batch size evaluation.", )
     parser.add_argument("--gpu_device", default=0, type=int, help="gpu device")
-    parser.add_argument("--gpu_device_ids", nargs="+", type=int, default=[0, 1, 2, 3], help="gpu device")
 
     parser.add_argument("--max_input_len", default=296, type=int, help="Max gradient norm.")
-    parser.add_argument("--weakly", action="store_true", help="Whether to run training.")
+    parser.add_argument("--weakly", action="store_true", help="Whether to run weak supervision.")
 
     parser.add_argument("--gradient_accumulation_steps", type=int, default=1, help="No. steps before backward pass.",)
     parser.add_argument("--learning_rate", default=1e-5, type=float, help="The initial learning rate for Adam.")
-    parser.add_argument("--weight_decay", default=0.0, type=float, help="Weight decay if we apply some.")
     parser.add_argument("--beta1", default=0.9, type=float, help="Weight decay if we apply some.")
     parser.add_argument("--beta2", default=0.999, type=float, help="Weight decay if we apply some.")
-    parser.add_argument("--adam_epsilon", default=1e-8, type=float, help="Epsilon for Adam optimizer.")
     parser.add_argument("--max_grad_norm", default=1.0, type=float, help="Max gradient norm.")
     parser.add_argument("--num_train_epochs", default=25, type=int, help="Total number of training epochs", )
     parser.add_argument("--num_train_steps", default=40000, type=int, help="Number of training steps.",)
     parser.add_argument("--num_warmup_steps", default=0, type=int, help="Linear warmup over warmup_steps.")
-    parser.add_argument("--save_steps", type=int, default=100, help="Save checkpoint every X updates steps.")
     parser.add_argument("--overwrite_output_dir", action="store_true", help="Overwrite the output directory", )
-    parser.add_argument("--overwrite_cache", action="store_true", help="Overwrite the cached data sets", )
     parser.add_argument("--predict", action="store_true", help="Generate summaries for dev set", )
     parser.add_argument("--seed", type=int, default=42, help="random seed for initialization")
-    parser.add_argument("--patience", type=int, default=42, help="set patience")
+    parser.add_argument("--patience", type=int, default=3, help="set patience")
     parser.add_argument("--log_path", type=str, help="set up log path to save training stats.")
 
     parser.add_argument(

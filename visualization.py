@@ -1,8 +1,6 @@
-import captum
-from captum.attr._utils.input_layer_wrapper import ModelInputWrapper
-from captum.attr import LayerIntegratedGradients, TokenReferenceBase, visualization, LayerDeepLift, InputXGradient, LimeBase
+from captum.attr import LayerIntegratedGradients, visualization, LayerDeepLift, InputXGradient, LimeBase
 from models import RERoberta
-from transformers import (RobertaModel, RobertaTokenizer)
+from transformers import RobertaTokenizer
 import torch
 import torch.nn as nn
 from captum._utils.models.linear_model import SkLearnLasso
@@ -11,19 +9,6 @@ import torch.nn.functional as F
 from load_data import MOST_COMMON_R, load_data, load_df
 from utils import common_args
 from models import get_val_loader, RERobertaDataset, RERobertaDatasetMask
-
-
-# parser = common_args()
-# args = parser.parse_args()
-# model = RERoberta(args, n_class=len(MOST_COMMON_R), regularization=False)
-# model.cuda(3)
-
-tokenizer = RobertaTokenizer.from_pretrained("roberta-base")
-
-ref_token_id = tokenizer.mask_token_id
-sep_token_id = tokenizer.sep_token_id 
-cls_token_id = tokenizer.cls_token_id
-pad_token_id = tokenizer.pad_token_id
 
 
 def view_rows(args, val_df, val_data, start, end, mask=False):
@@ -75,13 +60,8 @@ def view_rows_list(args, val_df, val_data, alist, mask=False):
             count += 1
         else:
             count += 1
-        # break
+        break
     return request_list
-
-
-def squad_pos_forward_func(input_ids, attention_mask):
-    logit = model(input_ids, attention_mask)
-    return logit.max(1).values
 
 
 def summarize_attributions(attributions):
@@ -160,7 +140,7 @@ def interp_to_input(interp_sample, original_input, **kwargs):
     return sample
 
 
-def get_prefix_postfix_idx(text):
+def get_prefix_postfix_idx(text, tokenizer):
     sep_id_pos = torch.where(text == tokenizer.sep_token_id)[1]
     prefix_end = sep_id_pos[2] + 1
     postfix_idx = sep_id_pos[3]
@@ -181,10 +161,6 @@ class InterpretationTool:
            
         self.model = model        
         self.set_tool()
-
-    def _squad_pos_forward_func(self, input_ids, attention_mask):
-        logit = self.model(input_ids, attention_mask)
-        return logit.max(1).values
 
     def set_tool(self):
         if self.tool_name == 'IG':
@@ -208,7 +184,8 @@ class InterpretationTool:
         return self.tool.attribute(**params)
 
 
-def add_visualization_helper(args, input_ids, attention_mask, text, head, tail, tool):
+def add_visualization_helper(args, input_ids, attention_mask, text, head, tail, tool, tokenizer, \
+    ref_token_id, sep_token_id, cls_token_id, pad_token_id):
 
     head_token_ids = tokenizer.encode(head, add_special_tokens=False)
     tail_token_ids = tokenizer.encode(tail, add_special_tokens=False)
@@ -235,10 +212,15 @@ def add_visualization_helper(args, input_ids, attention_mask, text, head, tail, 
     return logit, pred_idx, ref_input_ids
 
 
-def add_visualization(args, input_ids, attention_mask, text, evidence, head, relation, tail, doc_idx, tool):
+def add_visualization(args, input_ids, attention_mask, text, evidence, head, relation, tail, doc_idx, tool, tokenizer):
+
+    ref_token_id = tokenizer.mask_token_id
+    sep_token_id = tokenizer.sep_token_id 
+    cls_token_id = tokenizer.cls_token_id
+    pad_token_id = tokenizer.pad_token_id
     
-    
-    logit, pred_idx, ref_input_ids = add_visualization_helper(args, input_ids, attention_mask, text, head, tail, tool)
+    logit, pred_idx, ref_input_ids = add_visualization_helper(args, input_ids, attention_mask, text, head, tail, tool, tokenizer, \
+        ref_token_id=ref_token_id, sep_token_id=sep_token_id, cls_token_id=cls_token_id, pad_token_id=pad_token_id)
     
     if args.interpret_tool == 'IG':
         attributions, delta = tool.attribute(
@@ -265,7 +247,7 @@ def add_visualization(args, input_ids, attention_mask, text, evidence, head, rel
         )
         delta = None
     elif args.interpret_tool == 'LIME':
-        prefix_end, postfix_idx = get_prefix_postfix_idx(input_ids)
+        prefix_end, postfix_idx = get_prefix_postfix_idx(input_ids, tokenizer)
         attributions = tool.attribute(
             inputs=input_ids,
             target=pred_idx,
@@ -308,17 +290,12 @@ if __name__ == "__main__":
     val_data = load_data(args.val_dir)
     val_df = load_df(args.val_dir)
 
-    tokenizer = RobertaTokenizer.from_pretrained(args.tokenizer_class)
-    ref_token_id = tokenizer.mask_token_id
-    sep_token_id = tokenizer.sep_token_id 
-    cls_token_id = tokenizer.cls_token_id
-    pad_token_id = tokenizer.pad_token_id
-
     model = RERoberta(args, n_class=len(MOST_COMMON_R), regularization=False)
     model.to(args.device)
-
     model.load_state_dict(torch.load(f"params/docred_97_NA_40000/docred_97_NA_40000.pth"))
     model.eval();
+
+    tokenizer = RobertaTokenizer.from_pretrained(args.tokenizer_class)
 
     if args.interpret_tool == 'IXG':
         tool = InterpretationTool(args.interpret_tool, ModelWrapper(model))

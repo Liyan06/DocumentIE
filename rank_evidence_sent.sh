@@ -7,4 +7,4 @@ python evidence_ranking.py \
     --dataset_name RERobertaDataset \
     --max_input_len 296 \
     --per_gpu_eval_batch_size 1 \
-    --gpu_device 2
+    --gpu_device 1

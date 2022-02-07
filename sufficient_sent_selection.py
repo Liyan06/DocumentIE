@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from load_data import load_data
 from models import get_val_loader, RERoberta
+from transformers import RobertaTokenizer
 
 from load_data import load_df, load_relation, MOST_COMMON_R
 import json
@@ -11,13 +12,13 @@ from utils import common_args
 from train import DATASETDICT
 
 
-def extract_enough_sentence_org(args, val_idx, input_ids, k, evidence, text):
+def extract_enough_sentence_org(args, val_idx, input_ids, k, evidence, text, tokenizer):
 
     start, end = find_start_end_idx(input_ids)
     evi = evidence[val_idx]
     evi = evi[:k]
     
-    token_offsets = get_token_offset(input_ids.tolist()[start:end])
+    token_offsets = get_token_offset(input_ids.tolist()[start:end], tokenizer)
     sents_offset = get_sents_offsets(text)
     
     new_input_ids = input_ids[:start].tolist()
@@ -58,6 +59,8 @@ if __name__ == '__main__':
     model.to(args.device)
     model.load_state_dict(torch.load(args.trained_model_name_or_path))
     model.eval();
+    
+    tokenizer = RobertaTokenizer.from_pretrained(args.tokenizer_class)
 
     with open(args.evidence_ranking_path, "r") as f:
         evidence = json.load(f)
@@ -82,7 +85,7 @@ if __name__ == '__main__':
 
             k = 1; pred_label = -999; selected_evi = []; flag = True
             while flag:
-                new_input_ids, new_attention_mask = extract_enough_sentence_org(args, val_idx, input_ids[0], k, evidence, text[0])
+                new_input_ids, new_attention_mask = extract_enough_sentence_org(args, val_idx, input_ids[0], k, evidence, text[0], tokenizer)
                 logit = model(new_input_ids, new_attention_mask)
                 pred_softmax = torch.nn.Softmax(1)(logit).cpu().detach().numpy()
                 pred = torch.from_numpy(np.argmax(pred_softmax, axis=1))

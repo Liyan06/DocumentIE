@@ -1,8 +1,15 @@
-from visualization import *
+from visualization import add_visualization_helper, summarize_attributions, get_prefix_postfix_idx, InterpretationTool, ModelWrapper
 from tqdm import tqdm
 from nltk.tokenize import sent_tokenize
 from collections import Counter
 import json
+
+from utils import common_args
+from load_data import load_data, load_df, MOST_COMMON_R
+
+import torch
+from transformers import RobertaModel, RobertaTokenizer
+from models import RERoberta, get_val_loader, RERobertaDataset, RERobertaDatasetMask
 
 
 def find_start_end_idx(tensor):
@@ -28,7 +35,7 @@ def find_start_end_idx(tensor):
     return find_start_idx(), find_end_idx()
 
 
-def get_token_offset(encoding):
+def get_token_offset(encoding, tokenizer):
     offsets = []; idx = 0; t = ''
     for en in encoding:
         w = tokenizer.convert_ids_to_tokens(en)
@@ -65,9 +72,9 @@ def locate_token_to_sent(token_offset, sents_offset):
             return i
 
 
-def get_ranked_sentence(text, tensor, attributions_sum):
+def get_ranked_sentence(text, tensor, attributions_sum, tokenizer):
     start, end = find_start_end_idx(tensor)
-    token_offsets = get_token_offset(tensor.tolist()[start:end])
+    token_offsets = get_token_offset(tensor.tolist()[start:end], tokenizer)
     sents_offset = get_sents_offsets(text)
         
     sent_sum_score = Counter()
@@ -91,12 +98,17 @@ def get_ranked_sentence(text, tensor, attributions_sum):
     return sent_rank
 
 
-def get_all_ranks(args, val_df, val_data, tool, mask=False):
+def get_all_ranks(args, val_df, val_data, tool, tokenizer, mask=False):
 
     if mask:
         val_loader = get_val_loader(val_df, val_data, RERobertaDatasetMask, args)
     else:
         val_loader = get_val_loader(val_df, val_data, RERobertaDataset, args)
+
+    ref_token_id = tokenizer.mask_token_id
+    sep_token_id = tokenizer.sep_token_id 
+    cls_token_id = tokenizer.cls_token_id
+    pad_token_id = tokenizer.pad_token_id
     
     rank_list = []
     for data in tqdm(val_loader):
@@ -106,7 +118,8 @@ def get_all_ranks(args, val_df, val_data, tool, mask=False):
         head = data['head']
         tail = data['tail']
     
-        _, pred_idx, ref_input_ids = add_visualization_helper(args, input_ids, attention_mask, text, head, tail, tool)
+        _, pred_idx, ref_input_ids = add_visualization_helper(args, input_ids, attention_mask, text, head, tail, tool, \
+            tokenizer, ref_token_id, sep_token_id, cls_token_id, pad_token_id)
     
         if args.interpret_tool == 'IG':
             attributions = tool.attribute(
@@ -130,7 +143,7 @@ def get_all_ranks(args, val_df, val_data, tool, mask=False):
                 target=pred_idx, 
             )
         elif args.interpret_tool == 'LIME':
-            prefix_end, postfix_idx = get_prefix_postfix_idx(input_ids)
+            prefix_end, postfix_idx = get_prefix_postfix_idx(input_ids, tokenizer)
             attributions = tool.attribute(
                 inputs=input_ids,
                 target=pred_idx,
@@ -144,7 +157,7 @@ def get_all_ranks(args, val_df, val_data, tool, mask=False):
             )
             
         attributions_sum = summarize_attributions(attributions)
-        sent_rank = get_ranked_sentence(text[0], input_ids[0], attributions_sum)
+        sent_rank = get_ranked_sentence(text[0], input_ids[0], attributions_sum, tokenizer)
         rank_list.append(sent_rank)
 
 
@@ -170,13 +183,15 @@ if __name__ == "__main__":
     model.load_state_dict(torch.load(args.trained_model_name_or_path))
     model.eval();
 
+    tokenizer = RobertaTokenizer.from_pretrained(args.tokenizer_class)
+
     if args.interpret_tool == 'IXG':
         tool = InterpretationTool(args.interpret_tool, ModelWrapper(model))
     else:
         tool = InterpretationTool(args.interpret_tool, model)
 
     print(f"Start evidence sentences ranking with: {args.interpret_tool}.")
-    result = get_all_ranks(args, val_df, val_data, tool, mask=False)
+    result = get_all_ranks(args, val_df, val_data, tool, tokenizer, mask=False)
     with open(args.evidence_ranking_path, "w") as f:
         json.dump(result, f) 
 
