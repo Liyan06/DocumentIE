@@ -75,17 +75,3 @@ Once evidence sentences are collected by our SUFFICIENT method, use the followin
 ```
 python evidence_f1_eval.py --sufficient_sent_path PATH_THAT_SAVED_SUFFICIENT_EVIDENCE
 ```
-
-
-## Citation
-
-If you found this project helpful, please consider citing our paper.
-
-```
-@InProceedings{Tang-Et-Al:2021:DoclevelRE,
-  title = {Making Document-Level Information Extraction Right for the Right Reasons},
-  author = {Liyan Tang, Dhruv Rajan, Suyash Mohan, Abhijeet Pradhan, R. Nick Bryan, and Greg Durrett},
-  booktitle = {arXiv},
-  year = {2021},
-}
-```
