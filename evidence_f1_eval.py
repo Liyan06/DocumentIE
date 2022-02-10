@@ -1,6 +1,8 @@
 from utils import common_args
 from load_data import load_df
 import json
+from sklearn.utils import resample
+from tqdm import tqdm
 
 
 def get_macro_f1_R_P_score(truth_dict, pred_dict, verbose=True):
@@ -50,11 +52,12 @@ def get_micro_f1_R_P_score(truth_dict, pred_dict, verbose=True):
     return f1, precision, recall
 
 
-def f1_eval(args, all_evi=True):
+def f1_eval(args, evi_pred, evi_truth=None, all_evi=True, verbose=True):
 
-    evi_truth_dict = dict(enumerate(load_df(args.val_dir).evidence.values.tolist()))
-    with open(args.sufficient_sent_path, "r") as f:
-        evi_pred = json.load(f)[0]
+    if evi_truth:
+        evi_truth_dict = evi_truth
+    else:
+        evi_truth_dict = dict(enumerate(load_df(args.val_dir).evidence.values.tolist()))
     
     evi_pred_dict = {}
 
@@ -67,11 +70,33 @@ def f1_eval(args, all_evi=True):
                 evi.remove(None)
             evi_pred_dict[i] = evi[:len(evi_truth_dict[i])]
 
-    get_macro_f1_R_P_score(evi_truth_dict, evi_pred_dict)
-    get_micro_f1_R_P_score(evi_truth_dict, evi_pred_dict)
+    macro_f1, macro_pre, macro_recall = get_macro_f1_R_P_score(evi_truth_dict, evi_pred_dict, verbose=verbose)
 
     evi_len = [len(evi) for evi in evi_pred]
-    print(f"Average Evidence Length: {round(sum(evi_len) / len(evi_len), 2)}.")
+
+    if verbose:
+        print(f"Average Evidence Length: {round(sum(evi_len) / len(evi_len), 2)}.")
+
+    return macro_f1, macro_pre, macro_recall
+
+
+def DocRED_boostrap_evidence_p_value(baseline_evis, better_evis, truth, times):
+    count = 0
+    
+    for t in tqdm(range(times)):
+        sampled_indices = resample(range(len(truth)), replace=True, n_samples=len(truth), random_state=t)
+        sampled_base_evis = [baseline_evis[idx] for idx in sampled_indices]
+        sampled_both_evis = [better_evis[idx] for idx in sampled_indices]
+        sampled_truth = [truth[idx] for idx in sampled_indices]
+
+        base_f1, _ , _ = f1_eval(args, sampled_base_evis, sampled_truth, all_evi=True, verbose=False)
+        better_f1, _ , _ = f1_eval(args, sampled_both_evis, sampled_truth, all_evi=True, verbose=False)
+        
+        if better_f1 > base_f1:
+            count += 1
+
+    print(count)
+    return 1 - count / times
 
 
 if __name__  == "__main__":
@@ -80,5 +105,9 @@ if __name__  == "__main__":
     parser.add_argument("--sufficient_sent_path", type=str, help="dir to save sufficient sentences.")
     args = parser.parse_args()
 
-    f1_eval(args, all_evi=True)
+    sufficient_sent_path = args.sufficient_sent_path
+    with open(sufficient_sent_path, "r") as f:
+        evi_pred = json.load(f)
+
+    f1_eval(args, evi_pred, all_evi=True, verbose=False)
     
